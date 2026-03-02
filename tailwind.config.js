@@ -34,9 +34,12 @@ export default {
         }
       },
       fontFamily: {
-        display: ['"Playfair Display"', 'serif'],
-        body: ['"Source Sans 3"', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'monospace'],
+        // display: ['"Playfair Display"', 'serif'],
+        // body: ['"Source Sans 3"', 'sans-serif'],
+        // mono: ['"JetBrains Mono"', 'monospace'],
+        display: ['DM Sans', 'system-ui', 'sans-serif'],
+        body: ['DM Sans', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

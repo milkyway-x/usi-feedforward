@@ -49,8 +49,8 @@ export default function Landing() {
       {/* Header */}
       <header className="px-6 py-5 flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gold-500 rounded-xl flex items-center justify-center shadow-lg">
-            <span className="font-display font-bold text-white text-xl">U</span>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
+            <img src="/usi-logo.png" alt="USI" className="w-full h-full object-cover" />
           </div>
           <div>
             <p className="font-display font-bold text-white text-lg leading-tight">USI FeedForward</p>

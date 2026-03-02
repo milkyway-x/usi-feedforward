@@ -46,8 +46,8 @@ export default function Login() {
           <div className="p-8">
             {/* Logo + title */}
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-gold-500 rounded-xl flex items-center justify-center shadow-md shadow-gold-200">
-                <span className="font-display font-bold text-white text-xl">U</span>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md shadow-gold-200">
+                <img src="/usi-logo.png" alt="USI" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h1 className="font-display font-bold text-2xl text-forest-900 leading-tight">

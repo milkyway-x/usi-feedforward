@@ -10,8 +10,8 @@ import {
 
 const USILogo = () => (
   <div className="flex items-center gap-3">
-    <div className="w-10 h-10 bg-gold-500 rounded-xl flex items-center justify-center shadow-md">
-      <span className="text-white font-display font-bold text-lg">U</span>
+    <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md">
+      <img src="/usi-logo.png" alt="USI" className="w-full h-full object-cover" />
     </div>
     <div>
       <p className="font-display font-bold text-white text-sm leading-tight">USI</p>
