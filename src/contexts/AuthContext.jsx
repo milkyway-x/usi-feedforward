@@ -65,6 +65,16 @@ export const AuthProvider = ({ children }) => {
     return { error }
   }
 
+  const signInWithEmail = async (email, password) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    return { error }
+  }
+
+  const signUpWithEmail = async (email, password) => {
+    const { error } = await supabase.auth.signUp({ email, password })
+    return { error }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
@@ -87,6 +97,8 @@ export const AuthProvider = ({ children }) => {
       user, profile, loading,
       needsOnboarding,
       signInWithGoogle,
+      signInWithEmail,
+      signUpWithEmail,
       signOut,
       refreshProfile,
       completeOnboarding,

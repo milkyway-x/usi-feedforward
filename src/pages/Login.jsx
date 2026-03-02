@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { ArrowLeft, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowLeft, ShieldCheck, Sparkles, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const GoogleIcon = () => (
@@ -14,19 +14,53 @@ const GoogleIcon = () => (
 )
 
 export default function Login() {
-  const [loading, setLoading] = useState(false)
-  const { signInWithGoogle } = useAuth()
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [mode, setMode] = useState('signin') // 'signin' | 'signup'
+  const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const returnTo = new URLSearchParams(location.search).get('returnTo') || '/dashboard'
 
   const handleGoogle = async () => {
-    setLoading(true)
+    setGoogleLoading(true)
     const { error } = await signInWithGoogle(returnTo)
     if (error) {
       toast.error('Could not connect to Google. Please try again.')
-      setLoading(false)
+      setGoogleLoading(false)
     }
-    // On success the page redirects — loading stays true intentionally
+  }
+
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault()
+    if (!email.trim() || !password) return
+    setEmailLoading(true)
+
+    if (mode === 'signin') {
+      const { error } = await signInWithEmail(email.trim(), password)
+      if (error) {
+        toast.error(error.message === 'Invalid login credentials'
+          ? 'Incorrect email or password.'
+          : error.message)
+        setEmailLoading(false)
+      } else {
+        navigate(returnTo, { replace: true })
+      }
+    } else {
+      const { error } = await signUpWithEmail(email.trim(), password)
+      if (error) {
+        toast.error(error.message)
+        setEmailLoading(false)
+      } else {
+        toast.success('Account created! Check your email to confirm, then sign in.')
+        setMode('signin')
+        setEmailLoading(false)
+      }
+    }
   }
 
   return (
@@ -40,7 +74,6 @@ export default function Login() {
         </Link>
 
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          {/* Gold top bar */}
           <div className="h-1.5 bg-gradient-to-r from-gold-400 via-gold-500 to-forest-500" />
 
           <div className="p-8">
@@ -59,19 +92,13 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Description */}
-            <p className="text-gray-500 text-sm leading-relaxed mb-8">
-              Sign in with your Google account to access the feedback platform.
-              First-time users will be asked to complete their profile after signing in.
-            </p>
-
-            {/* Google sign-in button */}
+            {/* Google sign-in */}
             <button
               onClick={handleGoogle}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 hover:border-gold-400 hover:bg-gold-50 text-gray-700 font-semibold py-3.5 px-6 rounded-2xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed group"
+              disabled={googleLoading}
+              className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 hover:border-gold-400 hover:bg-gold-50 text-gray-700 font-semibold py-3.5 px-6 rounded-2xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? (
+              {googleLoading ? (
                 <>
                   <span className="w-5 h-5 border-2 border-gray-300 border-t-gold-500 rounded-full animate-spin" />
                   <span>Connecting to Google...</span>
@@ -84,11 +111,83 @@ export default function Login() {
               )}
             </button>
 
+            {/* Divider */}
+            <div className="flex items-center gap-3 my-5">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400 font-medium">or</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+
+            {/* Mode tabs */}
+            <div className="flex bg-gray-100 rounded-xl p-1 mb-5">
+              <button
+                onClick={() => setMode('signin')}
+                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${mode === 'signin' ? 'bg-white text-forest-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => setMode('signup')}
+                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${mode === 'signup' ? 'bg-white text-forest-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Create Account
+              </button>
+            </div>
+
+            {/* Email form */}
+            <form onSubmit={handleEmailSubmit} className="space-y-3">
+              <div className="relative">
+                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  required
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gold-400 transition-colors"
+                />
+              </div>
+              <div className="relative">
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Password"
+                  required
+                  minLength={6}
+                  className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gold-400 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(p => !p)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={emailLoading}
+                className="w-full bg-forest-700 hover:bg-forest-800 text-white font-semibold py-3.5 rounded-2xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {emailLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    {mode === 'signin' ? 'Signing in...' : 'Creating account...'}
+                  </>
+                ) : (
+                  mode === 'signin' ? 'Sign In with Email' : 'Create Account'
+                )}
+              </button>
+            </form>
+
             {/* Trust indicators */}
             <div className="mt-6 pt-6 border-t border-gray-100 space-y-2.5">
               <div className="flex items-center gap-2.5 text-xs text-gray-400">
                 <ShieldCheck size={14} className="text-forest-500 shrink-0" />
-                <span>Your Google credentials are never shared with USI FeedForward</span>
+                <span>Your credentials are never shared with third parties</span>
               </div>
               <div className="flex items-center gap-2.5 text-xs text-gray-400">
                 <Sparkles size={14} className="text-gold-500 shrink-0" />

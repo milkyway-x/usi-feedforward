@@ -4,8 +4,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import {
   LayoutDashboard, QrCode, Star, Bell, LogOut,
-  Menu, X, Users, Flag, AlertTriangle, ChevronDown,
-  Shield, GraduationCap
+  Menu, X, Users, AlertTriangle,
+  Shield, GraduationCap, ScanLine, UserCircle, Building2
 } from 'lucide-react'
 
 const USILogo = () => (
@@ -45,18 +45,21 @@ export default function Layout({ isAdmin = false }) {
   }
 
   const userLinks = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/my-qr', icon: QrCode, label: 'My QR Code' },
-    { to: '/my-feedback', icon: Star, label: 'My Ratings' },
-    { to: '/notifications', icon: Bell, label: 'Notifications', badge: unreadCount },
+    { to: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/my-qr',         icon: QrCode,          label: 'My QR Code' },
+    { to: '/scanner',       icon: ScanLine,         label: 'Scan QR' },
+    { to: '/my-feedback',   icon: Star,             label: 'My Ratings' },
+    { to: '/notifications', icon: Bell,             label: 'Notifications', badge: unreadCount },
+    { to: '/profile',       icon: UserCircle,       label: 'My Profile' },
   ]
 
   const adminLinks = [
-    { to: '/admin', icon: LayoutDashboard, label: 'Overview', end: true },
-    { to: '/admin/users', icon: Users, label: 'Manage Users' },
-    { to: '/admin/roster', icon: GraduationCap, label: 'Student Roster' },
-    { to: '/admin/feedback', icon: Star, label: 'All Feedback' },
-    { to: '/admin/suspicious', icon: AlertTriangle, label: 'Suspicious Activity' },
+    { to: '/admin',              icon: LayoutDashboard, label: 'Overview',           end: true },
+    { to: '/admin/users',        icon: Users,           label: 'Manage Users' },
+    { to: '/admin/roster',       icon: GraduationCap,   label: 'Student Roster' },
+    { to: '/admin/feedback',     icon: Star,            label: 'All Feedback' },
+    { to: '/admin/suspicious',   icon: AlertTriangle,   label: 'Suspicious Activity' },
+    { to: '/admin/departments',  icon: Building2,       label: 'Departments' },
   ]
 
   const links = isAdmin ? adminLinks : userLinks

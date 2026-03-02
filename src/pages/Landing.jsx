@@ -58,7 +58,7 @@ export default function Landing() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Link to="/login" className="bg-gold-500 hover:bg-gold-400 text-white font-semibold px-5 py-2 rounded-xl text-sm transition-all shadow-lg hover:shadow-gold-500/30">Sign In with Google</Link>
+          <Link to="/login" className="bg-gold-500 hover:bg-gold-400 text-white font-semibold px-5 py-2 rounded-xl text-sm transition-all shadow-lg hover:shadow-gold-500/30">Sign In</Link>
         </div>
       </header>
 
@@ -78,7 +78,7 @@ export default function Landing() {
         </p>
         <div className="flex items-center justify-center gap-4 flex-wrap">
           <Link to="/login" className="bg-gold-500 hover:bg-gold-400 text-white font-bold px-8 py-4 rounded-2xl text-lg shadow-xl hover:shadow-gold-500/40 transition-all">
-            Sign In with Google
+            Sign In
           </Link>
           <a href="#features" className="border border-forest-500 text-forest-200 hover:border-gold-500 hover:text-gold-300 font-semibold px-8 py-4 rounded-2xl text-lg transition-all">
             Learn More

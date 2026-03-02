@@ -1,23 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import {
   UserCircle, BadgeCheck, ChevronRight,
-  GraduationCap, Briefcase, BookOpen, Info
+  Briefcase, BookOpen, Info
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-const DEPARTMENTS = [
-  'Office of the President', 'Academic Affairs', 'Registrar', 'Finance',
-  'Human Resources', 'Student Affairs', 'Library', 'IT Department',
-  'Guidance Office', 'Medical/Dental Clinic', 'Canteen / Cafeteria',
-  'Security & Maintenance', 'Basic Education', 'College of Nursing',
-  'College of Education', 'College of Business', 'College of Arts & Sciences',
-  'Other'
-]
-
-const RoleCard = ({ value, current, onChange, icon: Icon, title, description, color }) => {
+const RoleCard = ({ value, current, onChange, icon: Icon, title, description }) => {
   const selected = current === value
   return (
     <button
@@ -63,6 +54,18 @@ export default function Onboarding() {
     full_name: user?.user_metadata?.full_name || user?.user_metadata?.name || '',
   })
   const [loading, setLoading] = useState(false)
+  const [departments, setDepartments] = useState([])
+
+  useEffect(() => {
+    supabase
+      .from('departments')
+      .select('name')
+      .eq('is_active', true)
+      .order('sort_order')
+      .then(({ data }) => {
+        if (data) setDepartments(data.map(d => d.name))
+      })
+  }, [])
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
@@ -259,7 +262,7 @@ export default function Onboarding() {
                     required
                   >
                     <option value="">Select your department...</option>
-                    {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                    {departments.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
 

@@ -17,6 +17,9 @@ import AdminUsers from './pages/AdminUsers'
 import AdminFeedback from './pages/AdminFeedback'
 import AdminSuspicious from './pages/AdminSuspicious'
 import AdminRoster from './pages/AdminRoster'
+import AdminDepartments from './pages/AdminDepartments'
+import Profile from './pages/Profile'
+import Scanner from './pages/Scanner'
 import Layout from './components/Layout'
 
 // ── Guard: authenticated + profile complete ───────────────────────────────────
@@ -82,15 +85,18 @@ function AppRoutes() {
         <Route path="my-qr"          element={<MyQRCode />} />
         <Route path="my-feedback"    element={<MyFeedback />} />
         <Route path="notifications"  element={<Notifications />} />
+        <Route path="scanner"        element={<Scanner />} />
+        <Route path="profile"        element={<Profile />} />
       </Route>
 
       {/* Protected — admin */}
       <Route path="/admin" element={<ProtectedRoute adminOnly><Layout isAdmin /></ProtectedRoute>}>
-        <Route index           element={<AdminDashboard />} />
-        <Route path="users"    element={<AdminUsers />} />
-        <Route path="roster"   element={<AdminRoster />} />
-        <Route path="feedback" element={<AdminFeedback />} />
-        <Route path="suspicious" element={<AdminSuspicious />} />
+        <Route index                  element={<AdminDashboard />} />
+        <Route path="users"           element={<AdminUsers />} />
+        <Route path="roster"          element={<AdminRoster />} />
+        <Route path="feedback"        element={<AdminFeedback />} />
+        <Route path="suspicious"      element={<AdminSuspicious />} />
+        <Route path="departments"     element={<AdminDepartments />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
