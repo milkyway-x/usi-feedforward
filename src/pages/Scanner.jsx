@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import jsQR from 'jsqr'
 import { Camera, ScanLine, AlertCircle, Info } from 'lucide-react'
 
 export default function Scanner() {
-  const navigate    = useNavigate()
-  const videoRef    = useRef(null)
-  const streamRef   = useRef(null)
-  const rafRef      = useRef(null)
+  const navigate  = useNavigate()
+  const videoRef  = useRef(null)
+  const streamRef = useRef(null)
+  const rafRef    = useRef(null)
+  const canvasRef = useRef(document.createElement('canvas'))
+
   const [scanning, setScanning] = useState(false)
   const [error, setError]       = useState(null)
 
@@ -21,15 +24,7 @@ export default function Scanner() {
   /* ── start scanning ───────────────────────────────────── */
   const startScan = async () => {
     setError(null)
-
-    if (!('BarcodeDetector' in window)) {
-      setError('QR scanning requires Chrome or Edge. Please open this page in one of those browsers.')
-      return
-    }
-
     try {
-      const detector = new window.BarcodeDetector({ formats: ['qr_code'] })
-
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
       })
@@ -38,30 +33,43 @@ export default function Scanner() {
       await videoRef.current.play()
       setScanning(true)
 
-      /* scan loop — runs every animation frame */
-      const loop = async () => {
-        if (!streamRef.current || !videoRef.current) return
-        try {
-          const results = await detector.detect(videoRef.current)
-          for (const r of results) {
+      const canvas = canvasRef.current
+      const ctx    = canvas.getContext('2d', { willReadFrequently: true })
+
+      const loop = () => {
+        const video = videoRef.current
+        if (!video || !streamRef.current) return
+
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width  = video.videoWidth
+          canvas.height = video.videoHeight
+          ctx.drawImage(video, 0, 0)
+
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: 'dontInvert',
+          })
+
+          if (code) {
             try {
-              const url   = new URL(r.rawValue)
+              const url   = new URL(code.data)
               const match = url.pathname.match(/\/feedback\/([a-zA-Z0-9-]+)/)
               if (match) {
                 stopScan()
                 navigate(`/feedback/${match[1]}`)
                 return
               }
-            } catch { /* not a valid URL */ }
+            } catch { /* QR data is not a URL — keep scanning */ }
           }
-        } catch { /* frame not ready yet */ }
+        }
+
         rafRef.current = requestAnimationFrame(loop)
       }
       rafRef.current = requestAnimationFrame(loop)
 
     } catch (err) {
       if (err.name === 'NotAllowedError') {
-        setError('Camera access was denied. Please allow camera permissions in your browser and try again.')
+        setError('Camera access was denied. Please allow camera permissions and try again.')
       } else if (err.name === 'NotFoundError') {
         setError('No camera found on this device.')
       } else {
@@ -87,7 +95,6 @@ export default function Scanner() {
         {/* Camera viewport */}
         <div className="relative w-full rounded-xl overflow-hidden bg-gray-900" style={{ minHeight: 300 }}>
 
-          {/* Native <video> — we control it directly */}
           <video
             ref={videoRef}
             className="w-full h-full object-cover"
