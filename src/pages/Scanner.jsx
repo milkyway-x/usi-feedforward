@@ -1,66 +1,79 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Html5Qrcode } from 'html5-qrcode'
 import { Camera, ScanLine, AlertCircle, Info } from 'lucide-react'
 
 export default function Scanner() {
-  const navigate = useNavigate()
+  const navigate    = useNavigate()
+  const videoRef    = useRef(null)
+  const streamRef   = useRef(null)
+  const rafRef      = useRef(null)
   const [scanning, setScanning] = useState(false)
   const [error, setError]       = useState(null)
-  const scannerRef = useRef(null)
 
-  const startScan = async () => {
-    setError(null)
-    try {
-      const scanner = new Html5Qrcode('qr-reader-viewport')
-      scannerRef.current = scanner
-
-      await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          try {
-            const url = new URL(decodedText)
-            const match = url.pathname.match(/\/feedback\/([a-zA-Z0-9-]+)/)
-            if (match) {
-              scanner.stop().catch(() => {})
-              setScanning(false)
-              navigate(`/feedback/${match[1]}`)
-            }
-          } catch {
-            // Not a URL — ignore
-          }
-        },
-        () => {} // per-frame error (no QR in frame) — ignore
-      )
-      setScanning(true)
-    } catch (err) {
-      const denied = err.name === 'NotAllowedError' || err.message?.includes('Permission')
-      setError(
-        denied
-          ? 'Camera access denied. Please allow camera permissions in your browser settings and try again.'
-          : 'Could not start the camera. Make sure no other app is using it, then try again.'
-      )
-    }
-  }
-
-  const stopScan = async () => {
-    if (scannerRef.current) {
-      try { await scannerRef.current.stop() } catch { /* ignore */ }
-      scannerRef.current = null
-    }
+  /* ── stop & clean up ─────────────────────────────────── */
+  const stopScan = () => {
+    if (rafRef.current)    { cancelAnimationFrame(rafRef.current); rafRef.current = null }
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null }
+    if (videoRef.current)  { videoRef.current.srcObject = null }
     setScanning(false)
   }
 
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {})
+  /* ── start scanning ───────────────────────────────────── */
+  const startScan = async () => {
+    setError(null)
+
+    if (!('BarcodeDetector' in window)) {
+      setError('QR scanning requires Chrome or Edge. Please open this page in one of those browsers.')
+      return
+    }
+
+    try {
+      const detector = new window.BarcodeDetector({ formats: ['qr_code'] })
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      })
+      streamRef.current = stream
+      videoRef.current.srcObject = stream
+      await videoRef.current.play()
+      setScanning(true)
+
+      /* scan loop — runs every animation frame */
+      const loop = async () => {
+        if (!streamRef.current || !videoRef.current) return
+        try {
+          const results = await detector.detect(videoRef.current)
+          for (const r of results) {
+            try {
+              const url   = new URL(r.rawValue)
+              const match = url.pathname.match(/\/feedback\/([a-zA-Z0-9-]+)/)
+              if (match) {
+                stopScan()
+                navigate(`/feedback/${match[1]}`)
+                return
+              }
+            } catch { /* not a valid URL */ }
+          }
+        } catch { /* frame not ready yet */ }
+        rafRef.current = requestAnimationFrame(loop)
+      }
+      rafRef.current = requestAnimationFrame(loop)
+
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        setError('Camera access was denied. Please allow camera permissions in your browser and try again.')
+      } else if (err.name === 'NotFoundError') {
+        setError('No camera found on this device.')
+      } else {
+        setError(`Could not start camera: ${err.message}`)
       }
     }
-  }, [])
+  }
 
+  /* clean up on page leave */
+  useEffect(() => () => stopScan(), []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── UI ───────────────────────────────────────────────── */
   return (
     <div className="max-w-lg mx-auto space-y-6 animate-fade-in">
       <div>
@@ -71,16 +84,26 @@ export default function Scanner() {
       </div>
 
       <div className="card space-y-4">
-        {/*
-          The viewport div must always be visible in the DOM.
-          html5-qrcode initialises before React re-renders, so hiding it
-          with display:none (Tailwind `hidden`) prevents the video from rendering.
-          We use a relative-positioned idle overlay instead.
-        */}
-        <div
-          id="qr-reader-viewport"
-          className="w-full rounded-xl overflow-hidden bg-gray-900 min-h-[300px] relative"
-        >
+        {/* Camera viewport */}
+        <div className="relative w-full rounded-xl overflow-hidden bg-gray-900" style={{ minHeight: 300 }}>
+
+          {/* Native <video> — we control it directly */}
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover"
+            playsInline
+            muted
+            style={{ display: scanning ? 'block' : 'none' }}
+          />
+
+          {/* Scan-box overlay */}
+          {scanning && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-56 h-56 border-2 border-white/80 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
+            </div>
+          )}
+
+          {/* Idle placeholder */}
           {!scanning && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
               <div className="w-20 h-20 bg-forest-100 rounded-2xl flex items-center justify-center mb-4">
@@ -88,7 +111,7 @@ export default function Scanner() {
               </div>
               <h2 className="font-display text-xl font-bold text-white mb-2">Ready to Scan</h2>
               <p className="text-gray-300 text-sm max-w-xs">
-                Tap "Start Camera" below to activate your camera and scan a colleague's QR code.
+                Tap "Start Camera" below to activate your camera.
               </p>
             </div>
           )}
@@ -104,10 +127,7 @@ export default function Scanner() {
 
         {/* Controls */}
         {!scanning ? (
-          <button
-            onClick={startScan}
-            className="btn-secondary w-full flex items-center justify-center gap-2"
-          >
+          <button onClick={startScan} className="btn-secondary w-full flex items-center justify-center gap-2">
             <Camera size={18} />
             Start Camera
           </button>
@@ -121,7 +141,6 @@ export default function Scanner() {
         )}
       </div>
 
-      {/* Instructions */}
       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex gap-3">
         <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
         <div className="text-sm text-blue-700">
