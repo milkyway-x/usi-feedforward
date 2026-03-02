@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Html5Qrcode } from 'html5-qrcode'
 import { Camera, ScanLine, AlertCircle, Info } from 'lucide-react'
-import toast from 'react-hot-toast'
 
 export default function Scanner() {
   const navigate = useNavigate()
@@ -28,9 +27,8 @@ export default function Scanner() {
               setScanning(false)
               navigate(`/feedback/${match[1]}`)
             }
-            // Non-matching QR codes are silently ignored — scanner keeps running
           } catch {
-            // Not a URL at all — ignore
+            // Not a URL — ignore
           }
         },
         () => {} // per-frame error (no QR in frame) — ignore
@@ -73,24 +71,28 @@ export default function Scanner() {
       </div>
 
       <div className="card space-y-4">
-        {/* Scanner viewport — html5-qrcode mounts the video element here */}
+        {/*
+          The viewport div must always be visible in the DOM.
+          html5-qrcode initialises before React re-renders, so hiding it
+          with display:none (Tailwind `hidden`) prevents the video from rendering.
+          We use a relative-positioned idle overlay instead.
+        */}
         <div
           id="qr-reader-viewport"
-          className={`w-full rounded-xl overflow-hidden bg-gray-900 ${scanning ? 'min-h-[300px]' : 'hidden'}`}
-        />
-
-        {/* Idle state */}
-        {!scanning && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 bg-forest-100 rounded-2xl flex items-center justify-center mb-4">
-              <ScanLine size={36} className="text-forest-600" />
+          className="w-full rounded-xl overflow-hidden bg-gray-900 min-h-[300px] relative"
+        >
+          {!scanning && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+              <div className="w-20 h-20 bg-forest-100 rounded-2xl flex items-center justify-center mb-4">
+                <ScanLine size={36} className="text-forest-600" />
+              </div>
+              <h2 className="font-display text-xl font-bold text-white mb-2">Ready to Scan</h2>
+              <p className="text-gray-300 text-sm max-w-xs">
+                Tap "Start Camera" below to activate your camera and scan a colleague's QR code.
+              </p>
             </div>
-            <h2 className="font-display text-xl font-bold text-gray-800 mb-2">Ready to Scan</h2>
-            <p className="text-gray-400 text-sm max-w-xs">
-              Tap "Start Camera" below to activate your camera and scan a colleague's QR code.
-            </p>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Error */}
         {error && (
