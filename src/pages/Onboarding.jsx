@@ -25,6 +25,7 @@ const RoleCard = ({ value, current, onChange, icon: Icon, title, description }) 
       <div className="flex items-center gap-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selected ? 'bg-gold-500' : 'bg-gray-100'} transition-colors`}>
           <Icon size={18} className={selected ? 'text-white' : 'text-gray-400'} />
+          {/* <img src="/usi-logo.png" alt="USI" className="w-full h-full object-cover" /> */}
         </div>
         <div className="flex-1">
           <p className={`font-semibold text-sm ${selected ? 'text-gold-700' : 'text-gray-700'}`}>{title}</p>
@@ -39,7 +40,7 @@ const RoleCard = ({ value, current, onChange, icon: Icon, title, description }) 
 }
 
 export default function Onboarding() {
-  const { user, completeOnboarding } = useAuth()
+  const { user, completeOnboarding, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const returnTo = new URLSearchParams(location.search).get('returnTo') || '/dashboard'
@@ -128,8 +129,8 @@ export default function Onboarding() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gold-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-gold-900/30">
-            <span className="font-display font-bold text-white text-2xl">U</span>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-gold-900/30">
+            <img src="/usi-logo.png" alt="USI" className="w-full h-full object-cover" />
           </div>
           <h1 className="font-display font-bold text-3xl text-white">One Last Step</h1>
           <p className="text-forest-300 mt-2 text-sm">
@@ -172,6 +173,13 @@ export default function Onboarding() {
               </div>
               <span className="text-xs text-forest-600 font-semibold bg-forest-100 px-2 py-0.5 rounded-full shrink-0">Google</span>
             </div>
+            <button
+              type="button"
+              onClick={async () => { await signOut(); navigate('/login', { replace: true }) }}
+              className="text-xs text-gray-400 hover:text-red-500 underline underline-offset-2 transition-colors mt-2"
+            >
+              Use a different account
+            </button>
 
             {/* ── Step 1: Role ── */}
             {step === 1 && (

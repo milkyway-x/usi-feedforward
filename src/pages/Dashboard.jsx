@@ -34,23 +34,19 @@ export default function Dashboard() {
   }, [profile])
 
   const fetchData = async () => {
-    // Get analytics for this user
-    const { data: analytics } = await supabase
-      .from('feedback_analytics')
-      .select('*')
-      .eq('id', profile.id)
-      .single()
+    // Get analytics and direct count in parallel
+    const [{ data: analytics }, { count }, { data: recent }] = await Promise.all([
+      supabase.from('feedback_analytics').select('*').eq('id', profile.id).single(),
+      supabase.from('feedback').select('*', { count: 'exact', head: true }).eq('recipient_id', profile.id),
+      supabase.from('feedback')
+        .select('id, average_rating, submitted_at, comments')
+        .eq('recipient_id', profile.id)
+        .order('submitted_at', { ascending: false })
+        .limit(5),
+    ])
 
-    setStats(analytics)
-
-    // Get recent feedback (no giver name shown)
-    const { data: recent } = await supabase
-      .from('feedback')
-      .select('id, average_rating, submitted_at, comments')
-      .eq('recipient_id', profile.id)
-      .order('submitted_at', { ascending: false })
-      .limit(5)
-
+    // Use the direct count as the source of truth
+    setStats(analytics ? { ...analytics, total_feedback_count: count ?? analytics.total_feedback_count } : null)
     setRecentFeedback(recent || [])
     setLoading(false)
   }
