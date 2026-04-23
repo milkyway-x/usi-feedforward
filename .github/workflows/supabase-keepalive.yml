@@ -7,13 +7,10 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    environment: SUPABASE_ANON_KEY
     steps:
       - name: Ping Supabase
         run: |
           code=$(curl -s -o /dev/null -w "%{http_code}" \
-            "https://bpnomdhoemfqwjbvzlap.supabase.co/rest/v1/" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+            "https://bpnomdhoemfqwjbvzlap.supabase.co/auth/v1/health")
           echo "Status: $code"
-          [[ "$code" == "200" || "$code" == "206" ]] || exit 1
+          [[ "$code" == "200" ]] || exit 1
